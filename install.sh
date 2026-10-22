@@ -34,13 +34,13 @@ killall Finder >/dev/null 2>&1 || true
 sleep 1
 echo
 if pluginkit -m -p com.apple.FinderSync -v | grep -q "$EXT_ID"; then
-    echo "Rozszerzenie zarejestrowane."
+    echo "Extension registered."
 else
-    echo "UWAGA: rozszerzenie nie zostało zarejestrowane. Uruchom ponownie install.sh."
+    echo "WARNING: the extension was not registered. Run install.sh again."
 fi
 echo
-echo "Gotowe. Kliknij prawym przyciskiem w dowolnym folderze → „Nowy plik”."
-echo "Jeśli pozycji nie ma: Ustawienia → Ogólne → Elementy logowania i rozszerzenia."
-echo "Skrót: ⌃⌥⌘N (plik tekstowy w folderze otwartego okna Findera)."
+echo "Done. Right-click inside any folder → “New File”."
+echo "If the item is missing: System Settings → General → Login Items & Extensions."
+echo "Shortcut: ⌃⌥⌘N (text file in the folder shown by the front Finder window)."
 
 open -a "$DEST"

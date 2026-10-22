@@ -10,9 +10,9 @@ enum FinderBridge {
         var errorDescription: String? {
             switch self {
             case .automationDenied:
-                return "QuickFile potrzebuje zgody na sterowanie Finderem. Włącz ją w Ustawieniach → Prywatność i bezpieczeństwo → Automatyzacja."
+                return "QuickFile needs permission to control Finder. Allow it in System Settings → Privacy & Security → Automation."
             case .noFolder:
-                return "Nie udało się ustalić folderu otwartego w Finderze."
+                return "Could not determine the folder shown in Finder."
             }
         }
     }

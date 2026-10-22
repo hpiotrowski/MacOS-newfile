@@ -32,26 +32,26 @@ final class StatusWindowController: NSWindowController, NSWindowDelegate {
     }()
 
     private lazy var enableButton: NSButton = {
-        let button = NSButton(title: "Otwórz ustawienia", target: self, action: #selector(openExtensionSettings))
+        let button = NSButton(title: "Open Settings", target: self, action: #selector(openExtensionSettings))
         button.bezelStyle = .rounded
         button.keyEquivalent = "\r"
         return button
     }()
 
     private lazy var restartButton: NSButton = {
-        let button = NSButton(title: "Restart Findera", target: self, action: #selector(restartFinder))
+        let button = NSButton(title: "Restart Finder", target: self, action: #selector(restartFinder))
         button.bezelStyle = .rounded
         return button
     }()
 
     private lazy var refreshButton: NSButton = {
-        let button = NSButton(title: "Odśwież", target: self, action: #selector(refresh))
+        let button = NSButton(title: "Refresh", target: self, action: #selector(refresh))
         button.bezelStyle = .rounded
         return button
     }()
 
     private lazy var loginItemCheckbox: NSButton = {
-        let button = NSButton(checkboxWithTitle: "Uruchamiaj przy logowaniu", target: self, action: #selector(toggleLoginItem))
+        let button = NSButton(checkboxWithTitle: "Launch at login", target: self, action: #selector(toggleLoginItem))
         button.state = LoginItem.isEnabled ? .on : .off
         return button
     }()
@@ -87,7 +87,7 @@ final class StatusWindowController: NSWindowController, NSWindowDelegate {
         let title = NSTextField(labelWithString: "QuickFile")
         title.font = .systemFont(ofSize: 20, weight: .semibold)
 
-        let subtitle = NSTextField(labelWithString: "Nowe pliki prosto z menu kontekstowego Findera.")
+        let subtitle = NSTextField(labelWithString: "Create new files right from Finder's context menu.")
         subtitle.font = .systemFont(ofSize: 12)
         subtitle.textColor = .secondaryLabelColor
 
@@ -113,7 +113,7 @@ final class StatusWindowController: NSWindowController, NSWindowDelegate {
         let separator = NSBox()
         separator.boxType = .separator
 
-        let shortcut = NSTextField(labelWithString: "Skrót ⌃⌥⌘N tworzy plik tekstowy w folderze otwartego okna Findera.")
+        let shortcut = NSTextField(labelWithString: "⌃⌥⌘N creates a text file in the folder shown by the front Finder window.")
         shortcut.font = .systemFont(ofSize: 11)
         shortcut.textColor = .tertiaryLabelColor
         shortcut.isSelectable = true
@@ -155,12 +155,12 @@ final class StatusWindowController: NSWindowController, NSWindowDelegate {
     @objc func refresh() {
         let enabled = FIFinderSyncController.isExtensionEnabled
 
-        statusLabel.stringValue = enabled ? "Rozszerzenie Findera aktywne" : "Rozszerzenie Findera nieaktywne"
+        statusLabel.stringValue = enabled ? "Finder extension active" : "Finder extension inactive"
         statusIcon.contentTintColor = enabled ? .systemGreen : .systemOrange
         enableButton.isHidden = enabled
         hintLabel.stringValue = enabled
-            ? "Kliknij prawym przyciskiem w folderze i wybierz „Nowy plik”."
-            : "Włącz „QuickFile” w Ustawieniach → Ogólne → Elementy logowania i rozszerzenia, w sekcji rozszerzeń Findera, a następnie zrestartuj Findera."
+            ? "Right-click inside a folder and choose \u{201C}New File\u{201D}."
+            : "Enable \u{201C}QuickFile\u{201D} in System Settings → General → Login Items & Extensions, in the Finder extensions section, then restart Finder."
         loginItemCheckbox.state = LoginItem.isEnabled ? .on : .off
     }
 

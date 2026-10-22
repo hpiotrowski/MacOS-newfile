@@ -94,7 +94,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
 
         let alert = NSAlert()
-        alert.messageText = "Nie udało się utworzyć pliku"
+        alert.messageText = "Could not create the file"
         alert.informativeText = error.localizedDescription
         alert.alertStyle = .warning
         alert.runModal()

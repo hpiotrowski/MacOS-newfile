@@ -23,4 +23,4 @@ echo "==> Removing preferences"
 defaults delete pl.hpiotrowski.quickfile >/dev/null 2>&1 || true
 
 killall Finder >/dev/null 2>&1 || true
-echo "Gotowe."
+echo "Done."

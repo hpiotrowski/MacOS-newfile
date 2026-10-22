@@ -3,7 +3,7 @@ import Foundation
 /// Creates new files with collision-free names.
 enum FileCreator {
 
-    static let baseName = "Nowy plik"
+    static let baseName = "Untitled"
 
     struct Result {
         let url: URL
@@ -16,15 +16,15 @@ enum FileCreator {
         var errorDescription: String? {
             switch self {
             case .notADirectory(let url):
-                return "„\(url.lastPathComponent)” nie jest folderem."
+                return "“\(url.lastPathComponent)” is not a folder."
             case .writeFailed(let url, let error):
-                return "Nie udało się utworzyć pliku w „\(url.path)”: \(error.localizedDescription)"
+                return "Could not create a file in “\(url.path)”: \(error.localizedDescription)"
             }
         }
     }
 
     /// Creates an empty file with the given extension inside `folder`.
-    /// If the name is taken, the next free number is used: "Nowy plik 2.txt".
+    /// If the name is taken, the next free number is used: "Untitled 2.txt".
     @discardableResult
     static func create(in folder: URL, extension ext: String) throws -> Result {
         var isDirectory: ObjCBool = false

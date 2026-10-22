@@ -16,7 +16,7 @@ final class FinderSync: FIFinderSync {
     }
 
     private let kinds: [FileKind] = [
-        FileKind(title: "Tekst (.txt)", ext: "txt", symbol: "doc.text"),
+        FileKind(title: "Text (.txt)", ext: "txt", symbol: "doc.text"),
         FileKind(title: "Markdown (.md)", ext: "md", symbol: "doc.plaintext"),
         FileKind(title: "Rich Text (.rtf)", ext: "rtf", symbol: "doc.richtext")
     ]
@@ -39,10 +39,10 @@ final class FinderSync: FIFinderSync {
 
         let menu = NSMenu(title: "")
 
-        let parent = NSMenuItem(title: "Nowy plik", action: nil, keyEquivalent: "")
+        let parent = NSMenuItem(title: "New File", action: nil, keyEquivalent: "")
         parent.image = NSImage(systemSymbolName: "doc.badge.plus", accessibilityDescription: nil)
 
-        let submenu = NSMenu(title: "Nowy plik")
+        let submenu = NSMenu(title: "New File")
         for (index, kind) in kinds.enumerated() {
             // `tag` survives the XPC hop to Finder; `representedObject` does not.
             let item = NSMenuItem(title: kind.title, action: #selector(createFile(_:)), keyEquivalent: "")

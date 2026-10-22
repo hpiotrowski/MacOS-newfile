@@ -2,12 +2,12 @@
 
 Brings the Windows-style **New File** action to macOS Finder.
 
-Right-click inside any folder → **Nowy plik** ▸ `Tekst (.txt)` / `Markdown (.md)` / `Rich Text (.rtf)`.
-The file is created instantly with a collision-free name and selected in Finder.
+Right-click inside any folder → **New File** ▸ `Text (.txt)` / `Markdown (.md)` / `Rich Text (.rtf)`.
+The file is created instantly with a collision-free name (`Untitled.txt`) and selected in Finder.
 
 ```
-Nowy plik
-├── Tekst (.txt)
+New File
+├── Text (.txt)
 ├── Markdown (.md)
 └── Rich Text (.rtf)
 ```
@@ -16,7 +16,7 @@ Nowy plik
 
 - Native Finder context-menu entry (Finder Sync extension, SF Symbols, dark-mode aware)
 - Instant creation — no dialog; the new file is revealed and selected in Finder
-- Unique names: `Nowy plik.txt`, `Nowy plik 2.txt`, `Nowy plik 3.txt`, …
+- Unique names: `Untitled.txt`, `Untitled 2.txt`, `Untitled 3.txt`, …
 - Right-clicking a folder creates the file **inside** that folder; right-clicking a file
   creates it next to the file
 - Global shortcut **⌃⌥⌘N** creates a text file in the folder shown by the front Finder window
@@ -83,7 +83,7 @@ The status window deep-links to the right pane and can restart Finder for you.
 
 ## Usage
 
-- **Context menu:** right-click a folder (or empty space in a Finder window) → `Nowy plik` → pick a type.
+- **Context menu:** right-click a folder (or empty space in a Finder window) → `New File` → pick a type.
 - **Shortcut:** ⌃⌥⌘N. The first use asks for permission to control Finder
   (System Settings → Privacy & Security → Automation). Approve once.
 
