@@ -1,9 +1,9 @@
-# MacOS-newfile (QuickFile)
+# QuickFile — New File for macOS Finder
 
-Brings the Windows-style **New File** action to macOS Finder.
+Brings the Windows-style **New File** action to macOS.
 
-Right-click inside any folder → **New File** ▸ `Text (.txt)` / `Markdown (.md)` / `Rich Text (.rtf)`.
-The file is created instantly with a collision-free name (`Untitled.txt`) and selected in Finder.
+Right-click inside any folder → **New File** ▸ pick a type. The file is created instantly
+with a collision-free name and selected in Finder.
 
 ```
 New File
@@ -12,17 +12,54 @@ New File
 └── Rich Text (.rtf)
 ```
 
-## Features
+> **Requirements:** macOS 14 or newer, Apple silicon (arm64).
 
-- Native Finder context-menu entry (Finder Sync extension, SF Symbols, dark-mode aware)
-- Instant creation — no dialog; the new file is revealed and selected in Finder
-- Unique names: `Untitled.txt`, `Untitled 2.txt`, `Untitled 3.txt`, …
-- Right-clicking a folder creates the file **inside** that folder; right-clicking a file
-  creates it next to the file
-- Global shortcut **⌃⌥⌘N** creates a text file in the folder shown by the front Finder window
-  (also works on the Desktop, where the context menu cannot reach)
-- Small status window (double-click `QuickFile` in `/Applications`) shows whether the
-  extension is enabled and offers a one-click Finder restart
+---
+
+## Install
+
+### Option 1 — download (fast, unsigned)
+
+1. Grab `QuickFile-1.0.0-arm64.zip` from [Releases](../../releases).
+2. Unpack it and move `QuickFile.app` to `/Applications`.
+3. Open it once — it registers its Finder extension and shows a status window.
+4. If the window says the extension is inactive, enable **QuickFile** in
+   **System Settings → General → Login Items & Extensions → Finder extensions**,
+   then press **Restart Finder**.
+
+The build is **ad-hoc signed**, not notarized, so macOS may block the first launch:
+right-click the app → **Open**, or run
+
+```sh
+xattr -dr com.apple.quarantine /Applications/QuickFile.app
+```
+
+If your Mac refuses to load the extension from a downloaded ad-hoc build, use Option 2.
+
+### Option 2 — build from source (recommended)
+
+Needs the Command Line Tools (`xcode-select --install`); Xcode is not required.
+
+```sh
+git clone https://github.com/hpiotrowski/MacOS-newfile.git
+cd MacOS-newfile
+./install.sh
+```
+
+`install.sh` builds the app, copies it to `/Applications`, registers the extension with
+`pluginkit`, enables it, restarts Finder and opens the app once.
+
+## Usage
+
+- **Context menu:** right-click inside a folder (or on a folder, or on a file) → `New File` → pick a type.
+  - background → the file lands in the folder you are looking at
+  - folder → the file lands inside that folder
+  - file → the file lands next to that file
+- **Shortcut:** ⌃⌥⌘N creates a text file in the folder shown by the front Finder window
+  (also works on the Desktop). The first use asks for permission to control Finder —
+  approve it once in **System Settings → Privacy & Security → Automation**.
+- **Status window:** open `QuickFile` from `/Applications` to see whether the extension is
+  active, restarted Finder, or toggle launch-at-login.
 
 ## How it works
 
@@ -35,68 +72,34 @@ QuickFile.app                     headless agent (LSUIElement, no Dock icon)
 The Finder Sync extension is sandboxed by macOS, so it never writes files itself. It only
 resolves the targeted folder and opens `quickfile://create?folder=…&ext=…`. The background
 agent handles that URL, writes the file and reveals it in Finder. This avoids unreliable
-writes from inside the extension process.
+writes from inside the extension process, and matches how polished Finder extensions work.
 
-The agent also registers itself as a login item so the global shortcut keeps working after
-a reboot.
+Finder's extension menus cross an XPC boundary, so menu items carry their payload in `tag`
+— `representedObject` does not survive the trip.
 
-## Requirements
-
-- macOS 14 or newer (developed and tested on macOS 26.6, Apple silicon)
-- Command Line Tools (`xcode-select --install`) — no Xcode project needed
+The agent registers itself as a login item so the global shortcut survives a reboot.
 
 ## Build
 
 ```sh
-./build.sh
+./build.sh          # -> build/QuickFile.app (ad-hoc signed)
 ```
 
-The result is `build/QuickFile.app`, ad-hoc signed so it runs locally without a Developer
-account.
-
-The icon is generated from the `doc.badge.plus` SF Symbol:
+No Xcode project: `build.sh` compiles both targets with `swiftc`, assembles the bundle and
+signs it. The icon is generated from the `doc.badge.plus` SF Symbol:
 
 ```sh
 swift scripts/make-icon.swift
 ```
 
-## Install
+## Release
 
 ```sh
-./install.sh
+VERSION=1.0.0 ./scripts/package-release.sh
 ```
 
-The script builds, copies the app to `/Applications`, registers the extension with
-`pluginkit`, enables it, restarts Finder and launches the app once.
-
-A stable path in `/Applications` matters — macOS treats the bundle identity with the
-extension registration, and login items require it.
-
-### Enabling the extension
-
-macOS requires a one-time user toggle; there is no API to flip it automatically:
-
-**System Settings → General → Login Items & Extensions → Finder extensions** → enable
-`QuickFile`, then restart Finder.
-
-The status window deep-links to the right pane and can restart Finder for you.
-
-## Usage
-
-- **Context menu:** right-click a folder (or empty space in a Finder window) → `New File` → pick a type.
-- **Shortcut:** ⌃⌥⌘N. The first use asks for permission to control Finder
-  (System Settings → Privacy & Security → Automation). Approve once.
-
-## Limitations
-
-- Finder controls context-menu placement: the item appears in the extension group near the
-  bottom of the menu, not next to Finder's own *New Folder*. This cannot be changed through
-  the Finder Sync API.
-- Icons inside context menus are rendered on macOS 26+; older systems show plain items.
-- The app is ad-hoc signed. If macOS refuses to load the extension after an update, re-run
-  `./install.sh`. For distribution outside this machine, sign with a Developer ID and
-  notarize.
-- Builds for `arm64` only (edit `TARGET` in `build.sh` if needed).
+Produces `dist/QuickFile-1.0.0-arm64.zip` and its SHA256, and verifies the signature both
+before and after a pack/unpack round-trip.
 
 ## Troubleshooting
 
@@ -110,12 +113,18 @@ pgrep -fl QuickFileExtension
 # Did Finder ask the extension for its menu?
 log show --last 5m --predicate 'eventMessage CONTAINS "QuickFile extension"' --style compact
 
-# Fallback when unified logging is unreadable: the extension's own log
-cat ~/Library/Containers/pl.hpiotrowski.quickfile.extension/Data/tmp/quickfile-extension.log
-
 # Re-register and restart
 ./install.sh
 ```
+
+## Limitations
+
+- Finder decides context-menu placement: the item appears in the extension group near the
+  bottom, not next to Finder's own *New Folder*. The Finder Sync API offers no control.
+- Context-menu icons render on macOS 26+; older systems show plain items.
+- The release build is ad-hoc signed. For a warning-free install, sign with a Developer ID
+  and notarize.
+- arm64 only.
 
 ## Uninstall
 
@@ -123,17 +132,6 @@ cat ~/Library/Containers/pl.hpiotrowski.quickfile.extension/Data/tmp/quickfile-e
 ./uninstall.sh
 ```
 
-## Project structure
-
-```
-Sources/QuickFile/              agent (URL handling, file creation, hot key, status window)
-Sources/QuickFileExtension/     Finder Sync extension (menu only)
-Resources/                      Info.plists, entitlements, generated icon
-scripts/make-icon.swift         icon renderer
-build.sh                        compile + assemble bundle + ad-hoc sign
-install.sh / uninstall.sh       install / remove
-```
-
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).

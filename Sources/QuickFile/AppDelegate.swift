@@ -25,6 +25,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        ExtensionRegistrar.registerOnceIfNeeded()
+
         // Opened by hand (no quickfile:// event): show the status window.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
             guard let self, !self.didHandleURL else { return }
