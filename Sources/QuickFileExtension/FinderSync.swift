@@ -12,43 +12,43 @@ final class FinderSync: FIFinderSync {
     private struct FileKind {
         let title: String
         let ext: String
+        let symbol: String
     }
 
     private let kinds: [FileKind] = [
-        FileKind(title: "Tekst (.txt)", ext: "txt"),
-        FileKind(title: "Markdown (.md)", ext: "md"),
-        FileKind(title: "Rich Text (.rtf)", ext: "rtf")
+        FileKind(title: "Tekst (.txt)", ext: "txt", symbol: "doc.text"),
+        FileKind(title: "Markdown (.md)", ext: "md", symbol: "doc.plaintext"),
+        FileKind(title: "Rich Text (.rtf)", ext: "rtf", symbol: "doc.richtext")
     ]
+
+    /// Menu kind received right before the user picks an item.
+    private var currentMenuKind: FIMenuKind = .contextualMenuForContainer
 
     override init() {
         super.init()
         // Monitor the whole filesystem so the menu is available in every folder.
-        // The home directory is added as a fallback in case a volume root is rejected.
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        FIFinderSyncController.default().directoryURLs = [
-            URL(fileURLWithPath: "/"),
-            home
-        ]
+        // (Inside the sandbox `homeDirectoryForCurrentUser` points at the app
+        // container, so only the volume root makes sense here.)
+        FIFinderSyncController.default().directoryURLs = [URL(fileURLWithPath: "/")]
     }
 
     // MARK: - Menu
 
     override func menu(for menuKind: FIMenuKind) -> NSMenu? {
-        NSLog("QuickFile extension: menu requested")
+        currentMenuKind = menuKind
+
         let menu = NSMenu(title: "")
 
         let parent = NSMenuItem(title: "Nowy plik", action: nil, keyEquivalent: "")
         parent.image = NSImage(systemSymbolName: "doc.badge.plus", accessibilityDescription: nil)
-        let submenu = NSMenu(title: "Nowy plik")
 
-        let symbols = ["doc.text", "doc.plaintext", "doc.richtext"]
+        let submenu = NSMenu(title: "Nowy plik")
         for (index, kind) in kinds.enumerated() {
+            // `tag` survives the XPC hop to Finder; `representedObject` does not.
             let item = NSMenuItem(title: kind.title, action: #selector(createFile(_:)), keyEquivalent: "")
             item.target = self
-            item.representedObject = kind.ext
-            if index < symbols.count {
-                item.image = NSImage(systemSymbolName: symbols[index], accessibilityDescription: nil)
-            }
+            item.tag = index
+            item.image = NSImage(systemSymbolName: kind.symbol, accessibilityDescription: nil)
             submenu.addItem(item)
         }
 
@@ -60,34 +60,84 @@ final class FinderSync: FIFinderSync {
     // MARK: - Actions
 
     @objc private func createFile(_ sender: NSMenuItem) {
-        guard let ext = sender.representedObject as? String else { return }
-        guard let folder = targetFolder() else { return }
+        guard kinds.indices.contains(sender.tag) else {
+            debugLog("createFile: invalid tag \(sender.tag)")
+            return
+        }
+        let kind = kinds[sender.tag]
+
+        guard let folder = targetFolder(for: currentMenuKind) else {
+            debugLog("createFile: could not resolve folder for menu kind \(currentMenuKind.rawValue)")
+            return
+        }
 
         var components = URLComponents()
         components.scheme = "quickfile"
         components.host = "create"
         components.queryItems = [
             URLQueryItem(name: "folder", value: folder.path),
-            URLQueryItem(name: "ext", value: ext)
+            URLQueryItem(name: "ext", value: kind.ext)
         ]
 
-        guard let url = components.url else { return }
-        NSWorkspace.shared.open(url)
+        guard let url = components.url else {
+            debugLog("createFile: could not build url")
+            return
+        }
+
+        if !NSWorkspace.shared.open(url) {
+            debugLog("createFile: opening \(url.absoluteString) failed")
+        }
     }
 
-    /// Folder the user right-clicked in, or the selected folder itself.
-    private func targetFolder() -> URL? {
-        if let selected = FIFinderSyncController.default().selectedItemURLs(),
-           let directory = selected.first(where: { isDirectory($0) }) {
-            return directory
+    /// Resolves the folder the new file belongs in.
+    ///
+    /// - Right-click on a folder: inside that folder.
+    /// - Right-click on a file: next to that file.
+    /// - Right-click on background / sidebar: that folder.
+    private func targetFolder(for menuKind: FIMenuKind) -> URL? {
+        let controller = FIFinderSyncController.default()
+
+        switch menuKind {
+        case .contextualMenuForItems:
+            if let selected = controller.selectedItemURLs(), !selected.isEmpty {
+                if selected.count == 1, let only = selected.first, isDirectory(only) {
+                    return only
+                }
+                return selected[0].deletingLastPathComponent()
+            }
+            return controller.targetedURL()
+
+        case .contextualMenuForSidebar:
+            return controller.targetedURL()
+                ?? controller.selectedItemURLs()?.first(where: isDirectory)
+
+        default:
+            return controller.targetedURL()
         }
-        if let targeted = FIFinderSyncController.default().targetedURL(), isDirectory(targeted) {
-            return targeted
-        }
-        return nil
     }
 
     private func isDirectory(_ url: URL) -> Bool {
         (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true
+    }
+
+    // MARK: - Diagnostics
+
+    /// Unified logging is not readable from the terminal on every setup, so the
+    /// extension also appends to a file inside its sandbox container:
+    /// ~/Library/Containers/pl.hpiotrowski.quickfile.extension/Data/tmp/quickfile-extension.log
+    private func debugLog(_ message: String) {
+        NSLog("QuickFile extension: %@", message)
+
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("quickfile-extension.log")
+        let line = "\(ISO8601DateFormatter().string(from: Date())) \(message)\n"
+        guard let data = line.data(using: .utf8) else { return }
+
+        if let handle = try? FileHandle(forWritingTo: url) {
+            handle.seekToEndOfFile()
+            handle.write(data)
+            try? handle.close()
+        } else {
+            try? data.write(to: url)
+        }
     }
 }

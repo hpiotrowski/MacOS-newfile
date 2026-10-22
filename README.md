@@ -110,6 +110,9 @@ pgrep -fl QuickFileExtension
 # Did Finder ask the extension for its menu?
 log show --last 5m --predicate 'eventMessage CONTAINS "QuickFile extension"' --style compact
 
+# Fallback when unified logging is unreadable: the extension's own log
+cat ~/Library/Containers/pl.hpiotrowski.quickfile.extension/Data/tmp/quickfile-extension.log
+
 # Re-register and restart
 ./install.sh
 ```
